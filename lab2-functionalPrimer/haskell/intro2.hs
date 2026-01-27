@@ -40,3 +40,4 @@ greet1 = "hello " ++ name ++ (toString 123)
 greet2 = (++) "hello " name
 -- concatenating more than 2 strings:
 greet3 = concat ["hello ", name, toString 123]
+
