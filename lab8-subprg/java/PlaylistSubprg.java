@@ -1,5 +1,4 @@
 import java.util.List;
-
 import java.util.Arrays;
 
 public class PlaylistSubprg {
@@ -7,7 +6,6 @@ public class PlaylistSubprg {
     // --------------------------------------------------
     // -- Record type Product
     // --------------------------------------------------
-
     public static class Product {
         public final String name;
         public final String brand;
@@ -26,7 +24,6 @@ public class PlaylistSubprg {
     // --------------------------------------------------
     // -- Union type Item
     // --------------------------------------------------
-
     public static abstract class Item {
         public final float length_secs;
 
@@ -68,7 +65,6 @@ public class PlaylistSubprg {
     // --------------------------------------------------
     // -- class PlaylistProgress
     // --------------------------------------------------
-
     public static class PlaylistProgress {
         private final List<Item> items;
         private int index;
@@ -82,7 +78,7 @@ public class PlaylistSubprg {
             this(items, 0);
         }
 
-        public Item getNextItem() throws EndOfPlaylist { //Extension Task 3b: Replace with a pure procedure and a pure function
+        public Item getNextItem() throws EndOfPlaylist {
             if (index >= items.size()) {
                 throw new EndOfPlaylist();
             }
@@ -92,13 +88,12 @@ public class PlaylistSubprg {
         }
 
         public class EndOfPlaylist extends Exception {
-
         }
 
         public float getRemainingLength() {
             float result = 0f;
             for (int i = index; i < items.size(); i++) {
-                result = result + items.get(i).length_secs;
+                result += items.get(i).length_secs;
             }
             return result;
         }
@@ -111,7 +106,7 @@ public class PlaylistSubprg {
      */
     public static float getPlaylistLengthTwoItems(List<Item> playlist) throws PlaylistProgress.EndOfPlaylist {
         PlaylistProgress progress = new PlaylistProgress(playlist);
-        // TASK 3a: Is the expression below referentially transparent?
+        // Not referentially transparent because getNextItem() modifies state
         return twice(progress.getNextItem().length_secs);
     }
 
@@ -126,7 +121,7 @@ public class PlaylistSubprg {
     public static float getPlaylistLength(List<Item> playlist) {
         float result = 0f;
         for (Item item : playlist) {
-            result = result + item.length_secs;
+            result += item.length_secs;
         }
         return result;
     }
@@ -153,9 +148,9 @@ public class PlaylistSubprg {
     public static void getPlaylistLength_ReferencePassing(List<Item> playlist, FloatHolder result,
             FloatHolder resultNoAds) {
         for (Item item : playlist) {
-            result.x = result.x + item.length_secs;
+            result.x += item.length_secs;
             if (!(item instanceof Advert)) {
-                resultNoAds.x = resultNoAds.x + item.length_secs;
+                resultNoAds.x += item.length_secs;
             }
         }
     }
@@ -169,24 +164,23 @@ public class PlaylistSubprg {
      */
     public static void getPlaylistLength_CopyInCopyOutPassing(List<Item> playlist, FloatHolder result,
             FloatHolder resultNoAds) {
-        // TASK 2b: complete this method, simulating copy-in/copy-out parameter passing
 
+        float result_local = result.x;
+        float resultNoAds_local = resultNoAds.x;
 
+        for (Item item : playlist) {
+            result_local += item.length_secs;
+            if (!(item instanceof Advert)) {
+                resultNoAds_local += item.length_secs;
+            }
+        }
 
-
-
-
-
-
-
-
+        // Copy-out
+        result.x = result_local;
+        resultNoAds.x = resultNoAds_local;
     }
 
-    public static void main(String[] args)
-        throws PlaylistProgress.EndOfPlaylist 
-        {
-        // TASK 1b: remove the above throws declaration, and handle the exception properly in the loop at line 234
-
+    public static void main(String[] args) {
         Piece piece1 = new Piece("Moonlight", "C. Arrau", 17 * 60 + 26f);
         Piece piece2 = new Piece("Pathetique", "D. Barenboim", 16 * 60 + 49f);
         Advert advert1 = new Advert(new Product("Bounty", "Mars"), 15.0f);
@@ -194,13 +188,13 @@ public class PlaylistSubprg {
         List<Item> playlist1 = Arrays.asList(piece1, advert1, piece2);
 
         System.out.printf("playlist1 = %s\n", playlist1);
-        System.out.printf("getPlaylistLength(playlist1) = %.2f\n",
-                getPlaylistLength(playlist1));
+        System.out.printf("getPlaylistLength(playlist1) = %.2f\n", getPlaylistLength(playlist1));
+
         try {
             System.out.printf("getPlaylistLengthTwoItems(playlist1) = %.2f\n",
                     getPlaylistLengthTwoItems(playlist1));
         } catch (PlaylistProgress.EndOfPlaylist e1) {
-            ; // ignore this exception
+            // ignore
         }
 
         System.out.println();
@@ -210,7 +204,7 @@ public class PlaylistSubprg {
         getPlaylistLength_ReferencePassing(playlist1, length1_Ref, length1NoAds_Ref);
         System.out.printf("length1_Ref = %.2f, length1NoAds_Ref = %.2f\n",
                 length1_Ref.x, length1NoAds_Ref.x);
-                
+
         System.out.println();
 
         FloatHolder length1_Copy = new FloatHolder(0f);
@@ -218,23 +212,29 @@ public class PlaylistSubprg {
         getPlaylistLength_CopyInCopyOutPassing(playlist1, length1_Copy, length1NoAds_Copy);
         System.out.printf("length1_Copy = %.2f, length1NoAds_Copy = %.2f\n",
                 length1_Copy.x, length1NoAds_Copy.x);
-                
+
         System.out.println();
 
         FloatHolder length1A_Ref = new FloatHolder(0f);
         getPlaylistLength_ReferencePassing(playlist1, length1A_Ref, length1A_Ref);
         System.out.printf("length1A_Ref = %.2f\n", length1A_Ref.x);
+
         FloatHolder length1A_Copy = new FloatHolder(0f);
         getPlaylistLength_CopyInCopyOutPassing(playlist1, length1A_Copy, length1A_Copy);
         System.out.printf("length1A_Copy = %.2f\n", length1A_Copy.x);
 
         System.out.println();
 
+        // Playlist progress loop
         PlaylistProgress progress = new PlaylistProgress(playlist1);
-        while (true) {        //TASK 1c: Modify this loop to handle the EndOfPlaylist exception
-            float remainingLength = progress.getRemainingLength();
-            System.out.printf("Next item = %s \n", progress.getNextItem());
-            System.out.printf("  remaining play time = %.2f \n", remainingLength);
+        while (true) {
+            try {
+                float remainingLength = progress.getRemainingLength();
+                System.out.printf("Next item = %s \n", progress.getNextItem());
+                System.out.printf(" remaining play time = %.2f \n", remainingLength);
+            } catch (PlaylistProgress.EndOfPlaylist e) {
+                break;
+            }
         }
     }
 }
